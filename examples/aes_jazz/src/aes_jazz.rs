@@ -250,19 +250,6 @@ fn print_num (num : u128) {
 }
 
 #[test]
-fn test_bytealign() {
-    let key = 0x2b7e151628aed2a6abf7158809cf4f3cu128;
-    let c = 0;
-    let s0 = matrix_index(key, 0, c);
-    let s1 = matrix_index(key, 1, c);
-    let s2 = matrix_index(key, 2, c);
-    let s3 = matrix_index(key, 3, c);
-    println!("{:X?} {:X?} {:X?} {:X?}\n", s0, s1, s2, s3);
-    print_num(key);
-    assert_eq!(false,true);
-}
-
-#[test]
 fn test_aeskeygenassist() {
     let key = 0x2b7e151628aed2a6abf7158809cf4f3cu128;
     let lhs = aeskeygenassist(key, RCON[1]);
@@ -293,14 +280,14 @@ fn test_keys_expand() {
 
     println!("{:X?}", keys_expand(key));
     for j in 0..12 {
-        println! ("{:X?}", index_u32(keys_expand(key)[j], 3));
-        println! ("{:X?}", index_u32(keys_expand(key)[j], 2));
-        println! ("{:X?}", index_u32(keys_expand(key)[j], 1));
         println! ("{:X?}", index_u32(keys_expand(key)[j], 0));
+        println! ("{:X?}", index_u32(keys_expand(key)[j], 1));
+        println! ("{:X?}", index_u32(keys_expand(key)[j], 2));
+        println! ("{:X?}", index_u32(keys_expand(key)[j], 3));
     }
 
     assert_eq!(keys_expand(key)[10],
-               rebuild_u128(0xb6630ca6, 0xe13f0cc8, 0xc9ee2589, 0xd014f9a8));
+               rebuild_u128(0xd014f9a8, 0xc9ee2589, 0xe13f0cc8, 0xb6630ca6));
 }
 
 fn temp () {
