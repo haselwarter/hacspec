@@ -34,6 +34,20 @@ const RCON: RCon = RCon([
     0xd8u8, 0xabu8, 0x4du8
 ]);
 
+fn index_u32 (s : u128, i : usize) -> u32 {
+    ((s >> (3 - i) * 32) % (1_u128 << 32)) as u32
+}
+fn index_u8 (s : u32, i : usize) -> u8 {
+    ((s >> (3 - i) * 8) % (1_u32 << 8)) as u8
+}
+
+fn rebuild_u32(s0 : u8, s1 : u8, s2 : u8, s3 : u8) -> u32 {
+    ((s0 as u32) << 24) | ((s1 as u32) << 16) | ((s2 as u32) << 8) | (s3 as u32)
+}
+fn rebuild_u128(s0 : u32, s1 : u32, s2 : u32, s3 : u32) -> u128 {
+    ((s0 as u128) << 96) | ((s1 as u128) << 64) | ((s2 as u128) << 32) | (s3 as u128)
+}
+
 // Jasmin
 fn vpshufd1_ (s: u128, o: u8, i : usize) -> u32 {
     (s >> 32 * (3 - ((o as usize >> (2 * i)) % 4))) as u32
@@ -65,20 +79,6 @@ fn key_combine(rkey: u128, temp1: u128, temp2: u128) -> (u128, u128) {
     let rkey = rkey ^ temp2;
     let rkey = rkey ^ temp1;
     (rkey, temp2)
-}
-
-fn index_u32 (s : u128, i : usize) -> u32 {
-    ((s >> (3 - i) * 32) % (1_u128 << 32)) as u32
-}
-fn index_u8 (s : u32, i : usize) -> u8 {
-    ((s >> (3 - i) * 8) % (1_u32 << 8)) as u8
-}
-
-fn rebuild_u32(s0 : u8, s1 : u8, s2 : u8, s3 : u8) -> u32 {
-    ((s0 as u32) << 24) | ((s1 as u32) << 16) | ((s2 as u32) << 8) | (s3 as u32)
-}
-fn rebuild_u128(s0 : u32, s1 : u32, s2 : u32, s3 : u32) -> u128 {
-    ((s0 as u128) << 96) | ((s1 as u128) << 64) | ((s2 as u128) << 32) | (s3 as u128)
 }
 
 fn aes_subword(v : u32) -> u32 {
