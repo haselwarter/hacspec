@@ -34,6 +34,31 @@ const RCON: RCon = RCon([
     0xd8u8, 0xabu8, 0x4du8
 ]);
 
+fn index_u32 (s : u128, i : usize) -> u32 {
+    ((s >> i * 32) % (1_u128 << 32)) as u32
+}
+fn index_u8 (s : u32, i : usize) -> u8 {
+    ((s >> i * 8) % (1_u32 << 8)) as u8
+}
+
+fn rebuild_u32(s0 : u8, s1 : u8, s2 : u8, s3 : u8) -> u32 {
+    (s0 as u32) | ((s1 as u32) << 8) | ((s2 as u32) << 16) | ((s3 as u32) << 24)
+}
+fn rebuild_u128(s0 : u32, s1 : u32, s2 : u32, s3 : u32) -> u128 {
+    (s0 as u128) | ((s1 as u128) << 32) | ((s2 as u128) << 64) | ((s3 as u128) << 96)
+}
+
+fn subword(v : u32) -> u32 {
+    rebuild_u32(SBOX[index_u8(v, 0)],
+                SBOX[index_u8(v, 1)],
+                SBOX[index_u8(v, 2)],
+                SBOX[index_u8(v, 3)])
+}
+
+fn rotword(v: u32) -> u32 {
+    (v >> 8) | (v << 24)
+}
+
 // Jasmin
 fn vpshufd1 (s: u128, o: u8, i : usize) -> u32 {
     (s >> 32 * ((o as usize >> (2 * i)) % 4)) as u32
@@ -68,39 +93,6 @@ fn key_combine(rkey: u128, temp1: u128, temp2: u128) -> (u128, u128) {
     (rkey, temp2)
 }
 
-fn index_u32 (s : u128, i : usize) -> u32 {
-    ((s >> i * 32) % (1_u128 << 32)) as u32
-}
-fn index_u8 (s : u32, i : usize) -> u8 {
-    ((s >> i * 8) % (1_u32 << 8)) as u8
-}
-fn index_u8_u128 (s : u128, i : usize) -> u8 {
-    ((s >> i * 8) % (1_u128 << 8)) as u8
-}
-
-fn set_index_u128(s : u128, c : usize, v : u8) -> u128 {
-    s - ((index_u8_u128(s, c) as u128) << c * 8)
-      + ((v                   as u128) << c * 8)
-}
-
-fn rebuild_u32(s0 : u8, s1 : u8, s2 : u8, s3 : u8) -> u32 {
-    (s0 as u32) | ((s1 as u32) << 8) | ((s2 as u32) << 16) | ((s3 as u32) << 24)
-}
-fn rebuild_u128(s0 : u32, s1 : u32, s2 : u32, s3 : u32) -> u128 {
-    (s0 as u128) | ((s1 as u128) << 32) | ((s2 as u128) << 64) | ((s3 as u128) << 96)
-}
-
-fn subword(v : u32) -> u32 {
-    rebuild_u32(SBOX[index_u8(v, 0)],
-                SBOX[index_u8(v, 1)],
-                SBOX[index_u8(v, 2)],
-                SBOX[index_u8(v, 3)])
-}
-
-fn rotword(v: u32) -> u32 {
-    (v >> 8) | (v << 24)
-}
-
 // See: https://www.intel.com/content/dam/doc/white-paper/advanced-encryption-standard-new-instructions-set-paper.pdf
 fn aeskeygenassist(v1: u128, v2: u8) -> u128 {
     let x1 = index_u32(v1, 1);
@@ -109,7 +101,6 @@ fn aeskeygenassist(v1: u128, v2: u8) -> u128 {
     let y1 = rotword(y0) ^ ((v2 as u32));
     let y2 = subword(x3);
     let y3 = rotword(y2) ^ ((v2 as u32));
-
     rebuild_u128(y0, y1, y2, y3)
 }
 
@@ -117,7 +108,6 @@ fn key_expand(rcon: u8, rkey: u128, temp2: u128) -> (u128, u128) {
     let temp1 = aeskeygenassist(rkey, rcon);
     let (rkey, temp2) = key_combine(rkey, temp1, temp2);
     (rkey, temp2)
-    // AES_128_ASSIST(rkey, aeskeygenassist(rkey, rcon))
 }
 
 type KeyList = Seq<u128>;
@@ -146,12 +136,12 @@ fn matrix_index (s : u128, i : usize, j : usize) -> u8 {
 }
 
 fn shiftrows (s : u128) -> u128 {
-    let r0 = rebuild_u32(matrix_index(s,0,0),matrix_index(s,1,1), matrix_index(s,2,2), matrix_index(s,3,3));
-    let r1 = rebuild_u32(matrix_index(s,0,1),matrix_index(s,1,2), matrix_index(s,2,3), matrix_index(s,3,0));
-    let r2 = rebuild_u32(matrix_index(s,0,2),matrix_index(s,1,3), matrix_index(s,2,0), matrix_index(s,3,1));
-    let r3 = rebuild_u32(matrix_index(s,0,3),matrix_index(s,1,0), matrix_index(s,2,1), matrix_index(s,3,2));
+    let c0 = rebuild_u32(matrix_index(s,0,0),matrix_index(s,1,1),matrix_index(s,2,2),matrix_index(s,3,3));
+    let c1 = rebuild_u32(matrix_index(s,0,1),matrix_index(s,1,2),matrix_index(s,2,3),matrix_index(s,3,0));
+    let c2 = rebuild_u32(matrix_index(s,0,2),matrix_index(s,1,3),matrix_index(s,2,0),matrix_index(s,3,1));
+    let c3 = rebuild_u32(matrix_index(s,0,3),matrix_index(s,1,0),matrix_index(s,2,1),matrix_index(s,3,2));
 
-    rebuild_u128(r0, r1, r2, r3)
+    rebuild_u128(c0, c1, c2, c3)
 }
 
 fn xtime(x: u8) -> u8 {
@@ -162,25 +152,25 @@ fn xtime(x: u8) -> u8 {
     x1 ^ x711b
 }
 
-fn mixcolumn(c: usize, state: u128) -> u128 {
+fn mixcolumn(c: usize, state: u128) -> u32 {
     let s0 = matrix_index(state, 0, c);
     let s1 = matrix_index(state, 1, c);
     let s2 = matrix_index(state, 2, c);
     let s3 = matrix_index(state, 3, c);
     let tmp = s0 ^ s1 ^ s2 ^ s3;
-    let st = state;
-    let st = set_index_u128(st, 0 + c * 4, s0 ^ tmp ^ (xtime(s0 ^ s1)));
-    let st = set_index_u128(st, 1 + c * 4, s1 ^ tmp ^ (xtime(s1 ^ s2)));
-    let st = set_index_u128(st, 2 + c * 4, s2 ^ tmp ^ (xtime(s2 ^ s3)));
-    let st = set_index_u128(st, 3 + c * 4, s3 ^ tmp ^ (xtime(s3 ^ s0)));
-    st
+    let r0 = s0 ^ tmp ^ (xtime(s0 ^ s1));
+    let r1 = s1 ^ tmp ^ (xtime(s1 ^ s2));
+    let r2 = s2 ^ tmp ^ (xtime(s2 ^ s3));
+    let r3 = s3 ^ tmp ^ (xtime(s3 ^ s0));
+    rebuild_u32(r0, r1, r2, r3)
 }
 
 fn mixcolumns(state: u128) -> u128 {
-    let state = mixcolumn(0, state);
-    let state = mixcolumn(1, state);
-    let state = mixcolumn(2, state);
-    mixcolumn(3, state)
+    let c0 = mixcolumn(0, state);
+    let c1 = mixcolumn(1, state);
+    let c2 = mixcolumn(2, state);
+    let c3 = mixcolumn(3, state);
+    rebuild_u128(c0, c1, c2, c3)
 }
 
 fn aesenc (state : u128, rkey : u128) -> u128 {
