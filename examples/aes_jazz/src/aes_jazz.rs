@@ -42,10 +42,10 @@ fn index_u8 (s : u32, i : usize) -> u8 {
 }
 
 fn rebuild_u32(s0 : u8, s1 : u8, s2 : u8, s3 : u8) -> u32 {
-    (s0 as u32) | ((s1 as u32) << 8) | ((s2 as u32) << 16) | ((s3 as u32) << 24)
+    (s0 as u32) | (((s1 as u32) << 8) | (((s2 as u32) << 16) | ((s3 as u32) << 24)))
 }
 fn rebuild_u128(s0 : u32, s1 : u32, s2 : u32, s3 : u32) -> u128 {
-    (s0 as u128) | ((s1 as u128) << 32) | ((s2 as u128) << 64) | ((s3 as u128) << 96)
+    (s0 as u128) | (((s1 as u128) << 32) | (((s2 as u128) << 64) | ((s3 as u128) << 96)))
 }
 
 fn subword(v : u32) -> u32 {
@@ -61,7 +61,7 @@ fn rotword(v: u32) -> u32 {
 
 // Jasmin
 fn vpshufd1 (s: u128, o: u8, i : usize) -> u32 {
-    (s >> 32 * ((o as usize >> (2 * i)) % 4)) as u32
+    index_u32(s >> 32 * ((o >> (2 * i)) % 4_u8) as usize, 0)
 }
 
 fn vpshufd (s: u128, o: u8) -> u128 {
@@ -70,7 +70,7 @@ fn vpshufd (s: u128, o: u8) -> u128 {
     let d3 : u32 = vpshufd1(s, o, 2);
     let d4 : u32 = vpshufd1(s, o, 3);
 
-    (d1 as u128) | ((d2 as u128) << 32) | ((d3 as u128) << 64) | ((d4 as u128) << 96)
+    rebuild_u128(d1, d2, d3, d4)
 }
 
 fn vshufps(s1: u128, s2: u128, o: u8) -> u128 {
@@ -79,7 +79,7 @@ fn vshufps(s1: u128, s2: u128, o: u8) -> u128 {
     let d3 : u32 = vpshufd1(s2, o, 2);
     let d4 : u32 = vpshufd1(s2, o, 3);
 
-    (d1 as u128) | ((d2  as u128) << 32) | ((d3 as u128) << 64) | ((d4 as u128) << 96)
+    rebuild_u128(d1, d2, d3, d4)
 }
 
 // note the constants might be off, I've interpreted arrays from `aes.jinc` as low endian, they might be big endian
@@ -112,13 +112,16 @@ fn key_expand(rcon: u8, rkey: u128, temp2: u128) -> (u128, u128) {
 
 type KeyList = Seq<u128>;
 
-fn keys_expand(mut key : u128) -> KeyList {
+fn keys_expand(key : u128) -> KeyList {
     let mut rkeys : KeyList = KeyList::new(0);
+    let mut key = key;
     let mut temp2 : u128 = 0;
     rkeys = rkeys.push(&key);
     for round in 1 .. 12 {
         let rcon = RCON[round];
-        (key, temp2) = key_expand(rcon, key, temp2);
+        let (key_temp, temp2_temp) = key_expand(rcon, key, temp2);
+        key = key_temp;
+        temp2 = temp2_temp;
         rkeys = rkeys.push(&key);
     }
     rkeys
