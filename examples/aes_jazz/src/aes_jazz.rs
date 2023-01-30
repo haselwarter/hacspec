@@ -56,10 +56,14 @@ fn subword(v : u32) -> u32 {
 }
 
 fn rotword(v: u32) -> u32 {
-    (v >> 8) | (v << 24)
+    // (v >> 8) | (v << 24)
+    rebuild_u32 (
+        index_u8(v, 1),
+        index_u8(v, 2),
+        index_u8(v, 3),
+        index_u8(v, 0))
 }
 
-// Jasmin
 fn vpshufd1 (s: u128, o: u8, i : usize) -> u32 {
     index_u32(s >> 32 * ((o >> (2 * i)) % 4_u8) as usize, 0)
 }
