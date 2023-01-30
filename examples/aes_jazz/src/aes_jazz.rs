@@ -139,12 +139,11 @@ fn matrix_index (s : u128, i : usize, j : usize) -> u8 {
 }
 
 fn shiftrows (s : u128) -> u128 {
-    let c0 = rebuild_u32(matrix_index(s,0,0),matrix_index(s,1,1),matrix_index(s,2,2),matrix_index(s,3,3));
-    let c1 = rebuild_u32(matrix_index(s,0,1),matrix_index(s,1,2),matrix_index(s,2,3),matrix_index(s,3,0));
-    let c2 = rebuild_u32(matrix_index(s,0,2),matrix_index(s,1,3),matrix_index(s,2,0),matrix_index(s,3,1));
-    let c3 = rebuild_u32(matrix_index(s,0,3),matrix_index(s,1,0),matrix_index(s,2,1),matrix_index(s,3,2));
-
-    rebuild_u128(c0, c1, c2, c3)
+    rebuild_u128(
+        rebuild_u32(matrix_index(s,0,0),matrix_index(s,1,1),matrix_index(s,2,2),matrix_index(s,3,3)),
+        rebuild_u32(matrix_index(s,0,1),matrix_index(s,1,2),matrix_index(s,2,3),matrix_index(s,3,0)),
+        rebuild_u32(matrix_index(s,0,2),matrix_index(s,1,3),matrix_index(s,2,0),matrix_index(s,3,1)),
+        rebuild_u32(matrix_index(s,0,3),matrix_index(s,1,0),matrix_index(s,2,1),matrix_index(s,3,2)))
 }
 
 fn xtime(x: u8) -> u8 {
