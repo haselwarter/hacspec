@@ -20,7 +20,7 @@ Set Bullet Behavior "Strict Subproofs".
 From Coq Require Import Utf8.
 From extructures Require Import ord fset fmap.
 Require Import micromega.Lia.
-From mathcomp.word Require Import word ssrZ.
+From mathcomp Require Import word word_ssrZ.
 From JasminSSProve Require Import aes_jazz jasmin_utils.
 From JasminSSProve Require Import aes_utils.
 Import JasminNotation JasminCodeNotation.

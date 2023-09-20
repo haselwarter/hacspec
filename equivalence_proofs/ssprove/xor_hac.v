@@ -7,7 +7,7 @@ Set Warnings "notation-overridden,ambiguous-paths".
 Require Import List.
 From Jasmin Require Import expr.
 From Jasmin Require Import x86_extra.
-From mathcomp.word Require Import word.
+From mathcomp Require Import word.
 From JasminSSProve Require Import jasmin_translate jasmin_utils.
 From Crypt Require Import Prelude Package pkg_user_util.
 
@@ -130,7 +130,7 @@ Import Num.Def.
 Import Num.Theory.
 
 #[local] Open Scope ring_scope.
-From mathcomp.word Require Import ssrZ.
+From mathcomp Require Import word_ssrZ.
 
 Import GRing Order TotalTheory.
 

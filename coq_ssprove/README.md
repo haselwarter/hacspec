@@ -12,7 +12,7 @@ Then one can install the dependencies through `opam` (assuming you have coq inst
 ```
 opam update
 opam install conf-ppl.1 -y
-opam install coq-mathcomp-word.2.0 -y
+opam install coq-mathcomp-word.2.1 -y
 opam pin jasmin https://github.com/SSProve/ssprove.git#3d40bc89 -y
 opam pin ssprove https://github.com/SSProve/ssprove.git#bead4e76acbb69b3ecf077cece56cd3fbde501e3 -y
 opam upgrade -y
